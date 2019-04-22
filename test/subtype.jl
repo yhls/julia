@@ -1584,3 +1584,9 @@ let T31805 = Tuple{Type{Tuple{}}, Tuple{Vararg{Int8, A}}} where A,
     S31805 = Tuple{Type{Tuple{Vararg{Int32, A}}}, Tuple{Vararg{Int16, A}}} where A
     @test !issub(T31805, S31805)
 end
+
+# this is is a timing test, so it'll fail on debug builds
+#let T = Type{Tuple{(Union{Int, Nothing} for i = 1:23)..., Union{String, Nothing}}},
+#    S = Type{T} where T<:Tuple{E, Vararg{E}} where E
+#    @test @elapsed (@test T != S) < 5
+#end
