@@ -1399,6 +1399,8 @@ JL_DLLEXPORT int jl_subtype_env_size(jl_value_t *t)
     return sz;
 }
 
+// compute the minimum bound on the number of concrete types that are subtypes of `t`
+// returns 0, 1, or many (2+)
 static int concrete_min(jl_value_t *t)
 {
     if (jl_is_unionall(t))
@@ -1539,9 +1541,10 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
             }
             int i, npx = jl_nparams(x), npy = jl_nparams(y);
             jl_vararg_kind_t vx = JL_VARARG_NONE;
+            jl_vararg_kind_t vy = JL_VARARG_NONE;
             jl_value_t *vxt = NULL;
-            int vy = 0;
             int nparams_expanded_x = npx;
+            int nparams_expanded_y = npy;
             if (istuple) {
                 if (npx > 0) {
                     jl_value_t *xva = jl_tparam(x, npx - 1);
@@ -1553,22 +1556,39 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
                             nparams_expanded_x += jl_vararg_length(xva);
                     }
                 }
-                vy = npy > 0 && jl_is_vararg_type(jl_tparam(y, npy - 1));
-            }
-            if (npx != npy || vx != JL_VARARG_NONE || vy) {
-                if ((vx == JL_VARARG_NONE || vx == JL_VARARG_UNBOUND) && !vy) {
-                    *subtype = 0;
-                    return 1;
+                if (npy > 0) {
+                    jl_value_t *yva = jl_tparam(y, npy - 1);
+                    vy = jl_vararg_kind(yva);
+                    if (vy != JL_VARARG_NONE) {
+                        nparams_expanded_y -= 1;
+                        if (vy == JL_VARARG_INT)
+                            nparams_expanded_y += jl_vararg_length(yva);
+                    }
                 }
-                if ((vx == JL_VARARG_NONE || vx == JL_VARARG_INT) &&
-                        nparams_expanded_x < npy - vy) {
-                    *subtype = 0;
-                    return 1; // number of fixed parameters in x could be fewer than in y
+                // if the nparams aren't equal, or at least one of them is a typevar (uncertain), they may be obviously disjoint
+                if (nparams_expanded_x != nparams_expanded_y || (vx != JL_VARARG_NONE && vx != JL_VARARG_INT) || (vy != JL_VARARG_NONE && vy != JL_VARARG_INT)) {
+                    // we have a stronger bound on x if:
+                    if (vy == JL_VARARG_NONE || vy == JL_VARARG_INT) { // the bound on y is certain
+                        if (vx == JL_VARARG_NONE || vx == JL_VARARG_INT || vx == JL_VARARG_UNBOUND || // and the bound on x is also certain
+                            nparams_expanded_x > nparams_expanded_y || npx > nparams_expanded_y) { // or x is unknown, but definitely longer than y
+                            *subtype = 0;
+                            return 1; // number of fixed parameters in x are more than declared in y
+                        }
+                    }
+                    if (nparams_expanded_x < nparams_expanded_y) {
+                        *subtype = 0;
+                        return 1; // number of fixed parameters in x could be fewer than in y
+                    }
+                    uncertain = 1;
                 }
-                // TODO: Can do better here for the JL_VARARG_INT case.
-                uncertain = 1;
             }
-            for (i = 0; i < npy - vy; i++) {
+            else if (npx != npy) {
+                *subtype = 0;
+                return 1;
+            }
+
+            // inspect the fixed parameters in y against x
+            for (i = 0; i < npy - (vy == JL_VARARG_NONE ? 0 : 1); i++) {
                 jl_value_t *a = i >= (npx - (vx == JL_VARARG_NONE ? 0 : 1)) ? vxt : jl_tparam(x, i);
                 jl_value_t *b = jl_tparam(y, i);
                 if (iscov || jl_is_typevar(b)) {
@@ -1606,12 +1626,12 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
                 }
             }
             if (i < npx) {
-                // look at the vararg tail too
-                assert(vy && istuple && iscov && uncertain);
+                // there are elements left in x (possibly just a Vararg), check them against the Vararg tail of y too
+                assert(vy != JL_VARARG_NONE && istuple && iscov && uncertain);
+                jl_value_t *a1 = (vx != JL_VARARG_NONE && i == npx - 1) ? vxt : jl_tparam(x, i);
                 jl_value_t *b = jl_unwrap_vararg(jl_tparam(y, i));
-                jl_value_t *a1 = jl_tparam(x, i);
-                if (npx - vx > npy && jl_is_typevar(b) && concrete_min(a1) > 1) {
-                    // diagonal rule: they must all be concrete
+                if (nparams_expanded_x > npy && jl_is_typevar(b) && concrete_min(a1) > 1) {
+                    // diagonal rule for 2 or more elements: they must all be concrete on the LHS
                     *subtype = 0;
                     return 1;
                 }
@@ -1619,24 +1639,24 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
                     a1 = jl_typeof(jl_tparam0(a1));
                 }
                 for (; i < npx; i++) {
-                    jl_value_t *a = jl_tparam(x, i);
-                    if (vx && i == npx - 1) {
-#ifndef NDEBUG
-                        continue; // XXX: subtyping bug #31805
-#endif
-                        a = jl_unwrap_vararg(a);
+                    jl_value_t *a;
+                    if (vx != JL_VARARG_NONE && i == npx - 1) {
+                        a = vxt;
                     }
-                    else if (i > npy && jl_is_typevar(b) && !jl_is_type_type(a)) {
-                        // diagonal rule: all the later parameters are also constrained to be equal to the first
-                        jl_value_t *a2 = a;
-                        if (jl_is_type_type(a) && jl_is_type(jl_tparam0(a))) {
-                            // if a is exactly Type{T}, then use typeof(T) instead here
-                            a2 = jl_typeof(jl_tparam0(a));
+                    else {
+                        a = jl_tparam(x, i);
+                        if (i > npy && jl_is_typevar(b) && !jl_is_type_type(a)) {
+                            // diagonal rule: all the later parameters are also constrained to be equal to the first
+                            jl_value_t *a2 = a;
+                            if (jl_is_type_type(a) && jl_is_type(jl_tparam0(a))) {
+                                // if a is exactly Type{T}, then use the concrete typeof(T) instead here
+                                a2 = jl_typeof(jl_tparam0(a));
+                            }
+                            if (jl_obvious_subtype(a2, a1, subtype) && !*subtype)
+                                return 1;
+                            if (jl_obvious_subtype(a1, a2, subtype) && !*subtype)
+                                return 1;
                         }
-                        if (jl_obvious_subtype(a2, a1, subtype) && !*subtype)
-                            return 1;
-                        if (jl_obvious_subtype(a1, a2, subtype) && !*subtype)
-                            return 1;
                     }
                     if (jl_obvious_subtype(a, b, subtype) && !*subtype)
                         return 1;
@@ -1716,6 +1736,7 @@ JL_DLLEXPORT int jl_types_equal(jl_value_t *a, jl_value_t *b)
         return 0;
     // the following is an interleaved version of:
     //   return jl_subtype(a, b) && jl_subtype(b, a)
+    // where we try to do the fast checks before the expensive ones
     if (jl_is_datatype(a) && !jl_is_concrete_type(b)) {
         // if one type looks simpler, check it on the right
         // first in order to reject more quickly.
