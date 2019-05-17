@@ -1627,7 +1627,7 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
             }
             if (i < npx) {
                 // there are elements left in x (possibly just a Vararg), check them against the Vararg tail of y too
-                assert(vy != JL_VARARG_NONE && istuple && iscov && uncertain);
+                assert(vy != JL_VARARG_NONE && istuple && iscov);
                 jl_value_t *a1 = (vx != JL_VARARG_NONE && i == npx - 1) ? vxt : jl_tparam(x, i);
                 jl_value_t *b = jl_unwrap_vararg(jl_tparam(y, i));
                 if (nparams_expanded_x > npy && jl_is_typevar(b) && concrete_min(a1) > 1) {
@@ -1639,27 +1639,44 @@ JL_DLLEXPORT int jl_obvious_subtype(jl_value_t *x, jl_value_t *y, int *subtype)
                     a1 = jl_typeof(jl_tparam0(a1));
                 }
                 for (; i < npx; i++) {
-                    jl_value_t *a;
-                    if (vx != JL_VARARG_NONE && i == npx - 1) {
-                        a = vxt;
-                    }
-                    else {
-                        a = jl_tparam(x, i);
-                        if (i > npy && jl_is_typevar(b) && !jl_is_type_type(a)) {
-                            // diagonal rule: all the later parameters are also constrained to be equal to the first
-                            jl_value_t *a2 = a;
-                            if (jl_is_type_type(a) && jl_is_type(jl_tparam0(a))) {
-                                // if a is exactly Type{T}, then use the concrete typeof(T) instead here
-                                a2 = jl_typeof(jl_tparam0(a));
+                    jl_value_t *a = (vx != JL_VARARG_NONE && i == npx - 1) ? vxt : jl_tparam(x, i);
+                    if (i > npy && jl_is_typevar(b)) { // i == npy implies a == a1
+                        // diagonal rule: all the later parameters are also constrained to be type-equal to the first
+                        jl_value_t *a2 = a;
+                        if (jl_is_type_type(a) && jl_is_type(jl_tparam0(a))) {
+                            // if a is exactly Type{T}, then use the concrete typeof(T) instead here
+                            a2 = jl_typeof(jl_tparam0(a));
+                        }
+                        if (!obviously_egal(a1, a2)) {
+                            if (jl_obvious_subtype(a2, a1, subtype)) {
+                                if (!*subtype)
+                                    return 1;
+                                if (jl_has_free_typevars(a1)) // a1 is actually more constrained that this
+                                    uncertain = 1;
                             }
-                            if (jl_obvious_subtype(a2, a1, subtype) && !*subtype)
-                                return 1;
-                            if (jl_obvious_subtype(a1, a2, subtype) && !*subtype)
-                                return 1;
+                            else {
+                                uncertain = 1;
+                            }
+                            if (jl_obvious_subtype(a1, a2, subtype)) {
+                                if (!*subtype)
+                                    return 1;
+                                if (jl_has_free_typevars(a2)) // a2 is actually more constrained that this
+                                    uncertain = 1;
+                            }
+                            else {
+                                uncertain = 1;
+                            }
                         }
                     }
-                    if (jl_obvious_subtype(a, b, subtype) && !*subtype)
-                        return 1;
+                    if (jl_obvious_subtype(a, b, subtype)) {
+                        if (!*subtype)
+                            return 1;
+                        if (jl_has_free_typevars(b)) // b is actually more constrained that this
+                            uncertain = 1;
+                    }
+                    else {
+                        uncertain = 1;
+                    }
                 }
             }
             if (uncertain)
