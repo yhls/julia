@@ -1725,13 +1725,8 @@ JL_DLLEXPORT int jl_subtype_env(jl_value_t *x, jl_value_t *y, jl_value_t **env, 
 #ifdef NDEBUG
         if (obvious_subtype == 0)
             return obvious_subtype;
-        else if (jl_has_free_typevars(y))
-            obvious_subtype = 3;
         else if (envsz == 0)
             return obvious_subtype;
-#else
-        if (jl_has_free_typevars(y))
-            obvious_subtype = 3;
 #endif
     }
     else {
@@ -1739,7 +1734,7 @@ JL_DLLEXPORT int jl_subtype_env(jl_value_t *x, jl_value_t *y, jl_value_t **env, 
     }
     init_stenv(&e, env, envsz);
     int subtype = forall_exists_subtype(x, y, &e, 0);
-    assert(obvious_subtype == 3 || obvious_subtype == subtype);
+    assert(obvious_subtype == 3 || obvious_subtype == subtype || jl_has_free_typevars(x) || jl_has_free_typevars(y));
     return subtype;
 }
 
@@ -1793,8 +1788,6 @@ JL_DLLEXPORT int jl_types_equal(jl_value_t *a, jl_value_t *b)
         if (subtype_ab == 0)
             return 0;
 #endif
-        if (jl_has_free_typevars(b))
-            subtype_ab = 3;
     }
     else {
         subtype_ab = 3;
@@ -1814,8 +1807,6 @@ JL_DLLEXPORT int jl_types_equal(jl_value_t *a, jl_value_t *b)
         if (subtype_ba == 0)
             return 0;
 #endif
-        if (jl_has_free_typevars(a))
-            subtype_ba = 3;
     }
     else {
         subtype_ba = 3;
@@ -1832,7 +1823,7 @@ JL_DLLEXPORT int jl_types_equal(jl_value_t *a, jl_value_t *b)
         if (subtype == 0)
             return 0;
 #endif
-        assert(subtype_ab == 3 || subtype_ab == subtype);
+        assert(subtype_ab == 3 || subtype_ab == subtype || jl_has_free_typevars(a) || jl_has_free_typevars(b));
         subtype_ab = subtype;
     }
 #ifdef NDEBUG
@@ -1845,7 +1836,7 @@ JL_DLLEXPORT int jl_types_equal(jl_value_t *a, jl_value_t *b)
         if (subtype == 0)
             return 0;
 #endif
-        assert(subtype_ba == 3 || subtype_ba == subtype);
+        assert(subtype_ba == 3 || subtype_ba == subtype || jl_has_free_typevars(a) || jl_has_free_typevars(b));
         subtype_ba = subtype;
     }
     // all tests successful
