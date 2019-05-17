@@ -1540,9 +1540,18 @@ end
 @testintersect(Tuple{Type{<:AbstractVector{T}}, Int} where T,
                Tuple{Type{Vector}, Any},
                Union{})
-@testintersect(Tuple{Type{<:AbstractVector{T}}, Int} where T,
-               Tuple{Type{Vector{T} where Int<:T<:Int}, Any},
-               Tuple{Type{Vector{Int}}, Int})
+#@testintersect(Tuple{Type{<:AbstractVector{T}}, Int} where T,
+#               Tuple{Type{Vector{T} where Int<:T<:Int}, Any},
+#               Tuple{Type{Vector{Int}}, Int})
+@test_broken isequal(_type_intersect(Tuple{Type{<:AbstractVector{T}}, Int} where T,
+                                     Tuple{Type{Vector{T} where Int<:T<:Int}, Any}),
+                     Tuple{Type{Vector{Int}}, Int})
+@test isequal_type(_type_intersect(Tuple{Type{<:AbstractVector{T}}, Int} where T,
+                                   Tuple{Type{Vector{T} where Int<:T<:Int}, Any}),
+                   Tuple{Type{Vector{Int}}, Int})
+@test isequal_type(_type_intersect(Tuple{Type{Vector{T} where Int<:T<:Int}, Any},
+                                   Tuple{Type{<:AbstractVector{T}}, Int} where T),
+                   Tuple{Type{Vector{Int}}, Int})
 let X = LinearAlgebra.Symmetric{T, S} where S<:(AbstractArray{U, 2} where U<:T) where T,
     Y = Union{LinearAlgebra.Hermitian{T, S} where S<:(AbstractArray{U, 2} where U<:T) where T,
               LinearAlgebra.Symmetric{T, S} where S<:(AbstractArray{U, 2} where U<:T) where T}
