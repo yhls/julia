@@ -211,6 +211,7 @@ exception, the exception is propagated (re-thrown in the task that called fetch)
 """
 function fetch(t::Task)
     wait(t)
+    # TODO: the load of t.result should probably have atomic_load_acquire semantics
     return task_result(t)
 end
 
