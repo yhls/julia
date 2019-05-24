@@ -598,6 +598,8 @@ jl_value_t *jl_toplevel_eval_flex(interpreter_state *istate, jl_module_t *JL_NON
         if (jl_is_linenode(e)) {
             jl_lineno = jl_linenode_line(e);
             jl_value_t *file = jl_linenode_file(e);
+            istate->ip = jl_lineno;
+            istate->filename = file;
             if (file != jl_nothing) {
                 assert(jl_is_symbol(file));
                 jl_filename = jl_symbol_name((jl_sym_t*)file);
@@ -799,9 +801,13 @@ jl_value_t *jl_toplevel_eval_flex(interpreter_state *istate, jl_module_t *JL_NON
         ptls->world_age = last_age;
     }
     else {
-        // use interpreter
+        // use interpreter proper
         assert(thk);
-        result = jl_interpret_toplevel_thunk(m, thk);
+        size_t lineno = istate->ip;
+        result = jl_interpret_toplevel_thunk(istate, m, thk);
+        // Restore interperter state to act as AST interpreter-like
+        istate->src = NULL;
+        istate->ip = lineno;
     }
 
     JL_GC_POP();
@@ -816,8 +822,7 @@ typedef struct {
 // FIXME SECT_INTERP ?
 INTERP_CALLBACK_ABI void *jl_toplevel_eval_callback(interpreter_state *istate, void *vargs) {
     jl_toplevel_eval_args *args = (jl_toplevel_eval_args*)vargs;
-    // FIXME: Set s.src and s.ip to do away with jl_filename & jl_lineno
-    istate->src = jl_symbol("none");
+    istate->filename = jl_nothing;
     istate->ip = 0;
     return jl_toplevel_eval_flex(istate, args->m, args->e, 1, 0);
 }

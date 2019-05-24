@@ -850,7 +850,7 @@ INTERP_CALLBACK_ABI void *jl_parse_eval_all_callback(interpreter_state *istate, 
     size_t last_age = jl_get_ptls_states()->world_age;
     jl_lineno = 0;
     jl_filename = fname;
-    istate->src = jl_symbol(fname);
+    istate->filename = (jl_value_t*)jl_symbol(fname);
     istate->ip = jl_lineno;
     jl_module_t *old_module = ctx->module;
     ctx->module = inmodule;
@@ -882,7 +882,7 @@ INTERP_CALLBACK_ABI void *jl_parse_eval_all_callback(interpreter_state *istate, 
             jl_get_ptls_states()->world_age = jl_world_counter;
             if (jl_is_linenode(form)) {
                 jl_lineno = jl_linenode_line(form);
-                istate->src = form; // FIXME
+                istate->ip = jl_lineno;
             }
             else {
                 result = jl_toplevel_eval_flex(istate, inmodule, form, 1, 1);
@@ -1042,8 +1042,9 @@ static jl_value_t *jl_invoke_julia_macro(jl_array_t *args, jl_module_t *inmodule
     if (!jl_typeis(lno, jl_linenumbernode_type)) {
         margs[1] = jl_new_struct(jl_linenumbernode_type, jl_box_long(0), jl_nothing);
     }
-    if (istate) {
-        istate->src = margs[1]; // FIXME conversion warning
+    if (istate) { // FIXME: Can be null.
+        istate->filename = jl_linenode_file(margs[1]);
+        istate->ip = jl_linenode_line(margs[1]);
     }
     margs[2] = (jl_value_t*)inmodule;
     for (i = 3; i < nargs; i++)

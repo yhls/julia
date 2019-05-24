@@ -854,21 +854,16 @@ SECT_INTERP jl_value_t *jl_fptr_interpret_call(jl_code_instance_t *codeinst, jl_
     return (jl_value_t*)enter_interpreter_frame(jl_interpret_call_callback, (void *)&callback_args);
 }
 
-struct jl_interpret_toplevel_thunk_args {
-    jl_module_t *m;
-    jl_code_info_t *src;
-};
-SECT_INTERP INTERP_CALLBACK_ABI void *jl_interpret_toplevel_thunk_callback(interpreter_state *s, void *vargs) {
-    struct jl_interpret_toplevel_thunk_args *args =
-        (struct jl_interpret_toplevel_thunk_args*)vargs;
-    JL_GC_PROMISE_ROOTED(args);
-    jl_array_t *stmts = args->src->code;
+SECT_INTERP jl_value_t *jl_interpret_toplevel_thunk(interpreter_state *s,
+                                                    jl_module_t *m, jl_code_info_t *src)
+{
+    jl_array_t *stmts = src->code;
     assert(jl_typeis(stmts, jl_array_any_type));
     jl_value_t **locals;
-    JL_GC_PUSHARGS(locals, jl_source_nslots(args->src) + jl_source_nssavalues(args->src));
-    s->src = args->src;
+    JL_GC_PUSHARGS(locals, jl_source_nslots(src) + jl_source_nssavalues(src));
+    s->src = src;
     s->locals = locals;
-    s->module = args->m;
+    s->module = m;
     s->sparam_vals = jl_emptysvec;
     s->continue_at = 0;
     s->mi = NULL;
@@ -876,13 +871,7 @@ SECT_INTERP INTERP_CALLBACK_ABI void *jl_interpret_toplevel_thunk_callback(inter
     jl_value_t *r = eval_body(stmts, s, 0, 1);
     jl_get_ptls_states()->world_age = last_age;
     JL_GC_POP();
-    return (void*)r;
-}
-
-SECT_INTERP jl_value_t *jl_interpret_toplevel_thunk(jl_module_t *m, jl_code_info_t *src)
-{
-    struct jl_interpret_toplevel_thunk_args args = { m, src };
-    return (jl_value_t *)enter_interpreter_frame(jl_interpret_toplevel_thunk_callback, (void*)&args);
+    return r;
 }
 
 // deprecated: do not use this method in new code
