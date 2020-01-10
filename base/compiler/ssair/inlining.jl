@@ -1010,6 +1010,8 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
             # World age does not need to be taken into account in the cache
             # because it is forwarded from type inference through `sv.params`
             # in the case that the cache is nonempty, so it should be unchanged
+            # The max number of methods should be the same as in inference most
+            # of the time, and should not affect correctness otherwise.
             min_val = UInt[typemin(UInt)]
             max_val = UInt[typemax(UInt)]
             ms = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS,
