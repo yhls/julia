@@ -1008,7 +1008,10 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         # Regular case: Perform method matching
         min_valid = UInt[typemin(UInt)]
         max_valid = UInt[typemax(UInt)]
-        meth = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS, sv.params.world, min_valid, max_valid)
+        meth = get(sv.matching_methods_cache, sig.atype) do
+            return _methods_by_ftype(sig.atype, sv.params.MAX_METHODS,
+                                     sv.params.world, min_valid, max_valid)
+        end
         if meth === false || length(meth) == 0
             # No applicable method, or too many applicable methods
             continue
