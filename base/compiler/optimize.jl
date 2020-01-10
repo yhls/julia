@@ -16,8 +16,9 @@ mutable struct OptimizationState
     sptypes::Vector{Any} # static parameters
     slottypes::Vector{Any}
     const_api::Bool
-    # cached results of calling `_methods_by_ftype`, from inference
-    matching_methods_cache::IdDict{DataType, Any}
+    # cached results of calling `_methods_by_ftype` from inference, including
+    # `min_valid` and `max_valid`
+    matching_methods_cache::IdDict{DataType, Tuple{Any, UInt, UInt}}
     function OptimizationState(frame::InferenceState)
         s_edges = frame.stmt_edges[1]
         if s_edges === nothing
@@ -61,7 +62,7 @@ mutable struct OptimizationState
                    src, inmodule, nargs,
                    UInt(1), get_world_counter(),
                    params, sptypes_from_meth_instance(linfo), slottypes, false,
-                   IdDict{DataType, Any}())
+                   IdDict{DataType, Tuple{Any, UInt, UInt}}())
         end
 end
 

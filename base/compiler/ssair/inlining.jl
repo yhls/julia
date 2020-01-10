@@ -1005,18 +1005,22 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
             continue
         end
 
-        # Regular case: Perform method matching
-        min_valid = UInt[typemin(UInt)]
-        max_valid = UInt[typemax(UInt)]
-        meth = get(sv.matching_methods_cache, sig.atype) do
-            return _methods_by_ftype(sig.atype, sv.params.MAX_METHODS,
-                                     sv.params.world, min_valid, max_valid)
+        # Regular case: Retrieve matching methods from cache (or compute them)
+        (meth, min_valid, max_valid) = get(sv.matching_methods_cache, sig.atype) do
+            # World age does not need to be taken into account in the cache
+            # because it is forwarded from type inference through `sv.params`
+            # in the case that the cache is nonempty, so it should be unchanged
+            min_val = UInt[typemin(UInt)]
+            max_val = UInt[typemax(UInt)]
+            ms = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS,
+                                   sv.params.world, min_val, max_val)
+            return (ms, min_val[1], max_val[1])
         end
         if meth === false || length(meth) == 0
             # No applicable method, or too many applicable methods
             continue
         end
-        update_valid_age!(min_valid[1], max_valid[1], sv)
+        update_valid_age!(min_valid, max_valid, sv)
 
         cases = Pair{Any, Any}[]
         # TODO: This could be better
