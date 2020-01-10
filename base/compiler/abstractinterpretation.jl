@@ -42,24 +42,16 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         splitsigs = switchtupleunion(atype)
         applicable = Any[]
         for sig_n in splitsigs
-            (xapplicable, min_valid[1], max_valid[1]) =
-                get(sv.matching_methods_cache, sig_n) do
-                    ms = _methods_by_ftype(sig_n, max_methods, sv.params.world,
-                                           min_valid, max_valid)
-                    return sv.matching_methods_cache[sig_n] =
-                        (ms, min_valid[1], max_valid[1])
-                end
+            xapplicable = _methods_by_ftype(sig_n, max_methods, sv.params.world,
+                                            min_valid, max_valid)
+            sv.matching_methods_cache[sig_n] = (xapplicable, min_valid[1], max_valid[1])
             xapplicable === false && return Any
             append!(applicable, xapplicable)
         end
     else
-        (applicable, min_valid[1], max_valid[1]) =
-            get(sv.matching_methods_cache, atype) do
-                ms = _methods_by_ftype(atype, max_methods, sv.params.world,
+        applicable = _methods_by_ftype(atype, max_methods, sv.params.world,
                                        min_valid, max_valid)
-                return sv.matching_methods_cache[atype] =
-                    (ms, min_valid[1], max_valid[1])
-            end
+        sv.matching_methods_cache[atype] = (applicable, min_valid[1], max_valid[1])
         if applicable === false
             # this means too many methods matched
             # (assume this will always be true, so we don't compute / update valid age in this case)
