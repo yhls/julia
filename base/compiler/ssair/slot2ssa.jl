@@ -201,6 +201,7 @@ function strip_trailing_junk!(ci::CodeInfo, code::Vector{Any}, flags::Vector{UIn
     term = code[end]
     if !isa(term, GotoIfNot) && !isa(term, GotoNode) && !isa(term, ReturnNode)
         push!(code, ReturnNode())
+        push!(matching_methods_cache, nothing)
         push!(ci.ssavaluetypes, Union{})
         push!(ci.codelocs, 0)
         push!(flags, 0x00)

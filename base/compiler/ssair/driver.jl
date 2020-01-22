@@ -64,6 +64,7 @@ function convert_to_ircode(ci::CodeInfo, code::Vector{Any}, coverage::Bool, narg
         if coverage && codeloc != prevloc && codeloc != 0
             # insert a side-effect instruction before the current instruction in the same basic block
             insert!(code, idx, Expr(:code_coverage_marker))
+            insert!(matching_methods_cache, idx, nothing)
             insert!(ci.codelocs, idx, codeloc)
             insert!(ci.ssavaluetypes, idx, Nothing)
             changemap[oldidx] += 1
@@ -77,6 +78,7 @@ function convert_to_ircode(ci::CodeInfo, code::Vector{Any}, coverage::Bool, narg
             if !(idx < length(code) && isexpr(code[idx + 1], :unreachable))
                 # insert unreachable in the same basic block after the current instruction (splitting it)
                 insert!(code, idx + 1, ReturnNode())
+                insert!(matching_methods_cache, idx + 1, nothing)
                 insert!(ci.codelocs, idx + 1, ci.codelocs[idx])
                 insert!(ci.ssavaluetypes, idx + 1, Union{})
                 if oldidx < length(changemap)

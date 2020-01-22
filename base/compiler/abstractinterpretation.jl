@@ -45,6 +45,14 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
             xapplicable = _methods_by_ftype(sig_n, max_methods, sv.params.world, min_valid, max_valid)
             xapplicable === false && return Any
             append!(applicable, xapplicable)
+            # if sv.matching_methods_cache[sv.currpc] === nothing
+            #     sv.matching_methods_cache[sv.currpc] = xapplicable
+            # else
+            #     append!(sv.matching_methods_cache[sv.currpc], xapplicable)
+            # end
+        end
+        if sv.matching_methods_cache[sv.currpc] === nothing
+            sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     else
         applicable = _methods_by_ftype(atype, max_methods, sv.params.world, min_valid, max_valid)
@@ -52,6 +60,14 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
             # this means too many methods matched
             # (assume this will always be true, so we don't compute / update valid age in this case)
             return Any
+        end
+        # if sv.matching_methods_cache[sv.currpc] === nothing
+        #     sv.matching_methods_cache[sv.currpc] = applicable
+        # else
+        #     append!(sv.matching_methods_cache[sv.currpc], applicable)
+        # end
+        if sv.matching_methods_cache[sv.currpc] === nothing
+            sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     end
     update_valid_age!(min_valid[1], max_valid[1], sv)

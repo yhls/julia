@@ -166,6 +166,15 @@ end
 
 # run the optimization work
 function optimize(opt::OptimizationState, @nospecialize(result))
+    # for (n, stmt) in enumerate(opt.src.code)
+    #     if isassigned(opt.matching_methods_cache, n)
+    #         print("*")
+    #     end
+    #     println((n, stmt, "*", isassigned(opt.matching_methods_cache, n) ? opt.matching_methods_cache[n] : false))
+    # end
+    # println()
+    # println()
+
     def = opt.linfo.def
     nargs = Int(opt.nargs) - 1
     @timeit "optimizer" ir = run_passes(opt.src, nargs, opt)

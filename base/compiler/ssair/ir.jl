@@ -217,6 +217,8 @@ function add!(is::InstructionStream)
     resize!(is.type, ninst)
     resize!(is.line, ninst)
     resize!(is.flag, ninst)
+    resize!(is.mmc, ninst)
+    is.mmc[end] = nothing
     return ninst
 end
 #function copy(is::InstructionStream) # unused
@@ -232,9 +234,11 @@ function resize!(stmts::InstructionStream, len)
     resize!(stmts.type, len)
     resize!(stmts.line, len)
     resize!(stmts.flag, len)
+    resize!(stmts.mmc, len)
     for i in (old_length + 1):len
         stmts.line[i] = 0
         stmts.flag[i] = 0x00
+        stmts.mmc[i] = nothing
     end
     return stmts
 end
@@ -249,6 +253,15 @@ Instruction(is::InstructionStream) = Instruction(is, add!(is))
 @inline function getindex(node::Instruction, fld::Symbol)
     isdefined(node, fld) && return getfield(node, fld)
     return getfield(getfield(node, :data), fld)[getfield(node, :idx)]
+    # x = getfield(getfield(node, :data), fld)
+    # y = getfield(node, :idx)
+    # try
+    #     return x[y]
+    # catch
+    #     println(fld)
+    #     println(x)
+    #     rethrow()
+    # end
 end
 @inline function setindex!(node::Instruction, @nospecialize(val), fld::Symbol)
     getfield(getfield(node, :data), fld)[getfield(node, :idx)] = val
@@ -258,6 +271,7 @@ end
 @inline getindex(is::InstructionStream, idx::Int) = Instruction(is, idx)
 function setindex!(is::InstructionStream, newval::Instruction, idx::Int)
     is.inst[idx] = newval[:inst]
+    is.mmc[idx] = newval[:mmc]
     is.type[idx] = newval[:type]
     is.line[idx] = newval[:line]
     is.flag[idx] = newval[:flag]
