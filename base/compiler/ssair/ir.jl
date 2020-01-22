@@ -197,13 +197,16 @@ struct InstructionStream
     type::Vector{Any}
     line::Vector{Int32}
     flag::Vector{UInt8}
+    mmc::Vector{Any}
 end
 function InstructionStream(len::Int)
     insts = Array{Any}(undef, len)
     types = Array{Any}(undef, len)
     lines = fill(Int32(0), len)
     flags = fill(0x00, len)
-    return InstructionStream(insts, types, lines, flags)
+    # mmc = Vector(nothing, len)
+    mmc = fill!(Vector{Any}(undef, len), nothing)
+    return InstructionStream(insts, types, lines, flags, mmc)
 end
 InstructionStream() = InstructionStream(0)
 length(is::InstructionStream) = length(is.inst)

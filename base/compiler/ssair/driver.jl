@@ -50,6 +50,8 @@ function normalize(@nospecialize(stmt), meta::Vector{Any})
 end
 
 function convert_to_ircode(ci::CodeInfo, code::Vector{Any}, coverage::Bool, nargs::Int, sv::OptimizationState)
+    matching_methods_cache = sv.matching_methods_cache
+
     # Go through and add an unreachable node after every
     # Union{} call. Then reindex labels.
     idx = 1
@@ -114,10 +116,10 @@ function convert_to_ircode(ci::CodeInfo, code::Vector{Any}, coverage::Bool, narg
             end
         end
     end
-    strip_trailing_junk!(ci, code, flags)
+    strip_trailing_junk!(ci, code, flags, matching_methods_cache)
     cfg = compute_basic_blocks(code)
     types = Any[]
-    stmts = InstructionStream(code, types, ci.codelocs, flags)
+    stmts = InstructionStream(code, types, ci.codelocs, flags, matching_methods_cache)
     ir = IRCode(stmts, cfg, collect(LineInfoNode, ci.linetable), sv.slottypes, meta, sv.sptypes)
     return ir
 end

@@ -103,7 +103,7 @@ mutable struct InferenceState
             Vector{Tuple{InferenceState,LineNum}}(), # cycle_backedges
             Vector{InferenceState}(), # callers_in_cycle
             #=parent=#nothing,
-            cached, false, false, false)
+            cached, false, false, false, fill!(Vector{Any}(undef, n), nothing))# Vector{Any}(nothing, n))
         result.result = frame
         cached && push!(params.cache, result)
         return frame
