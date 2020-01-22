@@ -41,6 +41,8 @@ mutable struct InferenceState
     inferred::Bool
     dont_work_on_me::Bool
 
+    matching_methods_cache::Any
+
     # src is assumed to be a newly-allocated CodeInfo, that can be modified in-place to contain intermediate results
     function InferenceState(result::InferenceResult, src::CodeInfo,
                             cached::Bool, params::Params)
