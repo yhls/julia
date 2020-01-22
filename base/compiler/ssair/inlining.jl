@@ -1006,8 +1006,8 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         end
 
         # Regular case: Perform method matching
-        min_valid = UInt[typemin(UInt)]
-        max_valid = UInt[typemax(UInt)]
+        # min_valid = UInt[typemin(UInt)]
+        # max_valid = UInt[typemax(UInt)]
         # println("************ ", ir.stmts.mmc)
         mms = ir.stmts[idx][:mmc]
         # if mms === nothing
@@ -1018,17 +1018,21 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         if mms !== nothing && mms[1] === sig.atype
             # println("HIT")
             meth = mms[2]
-            min_valid[1] = mms[3]
-            max_valid[1] = mms[4]
+            min_valid = mms[3]
+            max_valid = mms[4]
         else
             # println("MISS")
+            min_valid = UInt[typemin(UInt)]
+            max_valid = UInt[typemax(UInt)]
             meth = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS, sv.params.world, min_valid, max_valid)
+            min_valid = min_valid[1]
+            max_valid = max_valid[1]
         end
         if meth === false || length(meth) == 0
             # No applicable method, or too many applicable methods
             continue
         end
-        update_valid_age!(min_valid[1], max_valid[1], sv)
+        update_valid_age!(min_valid, max_valid, sv)
 
         cases = Pair{Any, Any}[]
         # TODO: This could be better
