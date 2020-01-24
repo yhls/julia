@@ -757,6 +757,7 @@ function insert_node_here!(compact::IncrementalCompact, @nospecialize(val), @nos
     end
     node = compact.result[result_idx]
     node[:inst], node[:type], node[:line], node[:flag] = val, typ, ltable_idx, 0x00
+    node[:mmc] = nothing # is this actually necessary? TODO: measure
     if count_added_node!(compact, val)
         push!(compact.late_fixup, result_idx)
     end
@@ -1088,8 +1089,10 @@ function finish_current_bb!(compact::IncrementalCompact, active_bb, old_result_i
             node = compact.result[old_result_idx]
             if unreachable
                 node[:inst], node[:type], node[:line] = ReturnNode(), Union{}, 0
+                node[:mmc] = nothing
             else
                 node[:inst], node[:type], node[:line] = nothing, Nothing, 0
+                node[:mmc] = nothing
             end
             compact.result_idx = old_result_idx + 1
         elseif compact.cfg_transforms_enabled && compact.result_idx - 1 == first(bb.stmts)

@@ -1021,12 +1021,28 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         #     println("B ", sig.atype, " *** ", mms[1])
         # end
         if mms !== nothing && mms[1] === sig.atype
-            # println("HIT")
+            println("HIT")
             meth = mms[2]
             min_valid = mms[3]
             max_valid = mms[4]
         else
-            # println("MISS")
+            if mms !== nothing
+                println("MISS ", sv.linfo, " *** ", sig.atype, " ***** ", mms)
+                println()
+
+                println(ir.stmts[idx])
+                println()
+
+                println(sv.src.code)
+                println()
+
+                println(stmt)
+                println(sig.atype)
+                println()
+
+
+                # @assert false
+            end
             min_valid = UInt[typemin(UInt)]
             max_valid = UInt[typemax(UInt)]
             meth = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS, sv.params.world, min_valid, max_valid)

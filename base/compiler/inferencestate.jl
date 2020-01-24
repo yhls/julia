@@ -114,6 +114,17 @@ function InferenceState(result::InferenceResult, cached::Bool, params::Params)
     # prepare an InferenceState object for inferring lambda
     src = retrieve_code_info(result.linfo)
     src === nothing && return nothing
+
+    if length(src.code) == 13
+        println("InferenceState constructor *****************************************")
+        println(result.linfo)
+        println(src.code)
+        println()
+    end
+
+
+
+
     validate_code_in_debug_mode(result.linfo, src, "lowered")
     return InferenceState(result, src, cached, params)
 end

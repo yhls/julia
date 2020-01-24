@@ -155,7 +155,9 @@ function finish(me::InferenceState)
         if run_optimizer
             # construct the optimizer for later use, if we're building this IR to cache it
             # (otherwise, we'll run the optimization passes later, outside of inference)
+            println("finish(InferenceState) OS start")
             opt = OptimizationState(me)
+            println("finish(InferenceState) OS end")
             me.result.src = opt
         end
     end
@@ -350,6 +352,7 @@ function type_annotate!(sv::InferenceState)
                 deleteat!(states, i)
                 deleteat!(src.ssavaluetypes, i)
                 deleteat!(src.codelocs, i)
+                deleteat!(sv.matching_methods_cache, i)
                 nexpr -= 1
                 if oldidx < length(changemap)
                     changemap[oldidx + 1] = -1

@@ -123,6 +123,13 @@ function convert_to_ircode(ci::CodeInfo, code::Vector{Any}, coverage::Bool, narg
     types = Any[]
     stmts = InstructionStream(code, types, ci.codelocs, flags, matching_methods_cache)
     ir = IRCode(stmts, cfg, collect(LineInfoNode, ci.linetable), sv.slottypes, meta, sv.sptypes)
+    # if length(ci.code) == 12
+    #     println("*************************")
+    #     println(matching_methods_cache)
+    #     println("***")
+    #     println(ci.code)
+    #     println()
+    # end
     return ir
 end
 
@@ -135,6 +142,7 @@ function slot2reg(ir::IRCode, ci::CodeInfo, nargs::Int, sv::OptimizationState)
 end
 
 function run_passes(ci::CodeInfo, nargs::Int, sv::OptimizationState)
+    # println(ci.parent)
     preserve_coverage = coverage_enabled(sv.mod)
     ir = convert_to_ircode(ci, copy_exprargs(ci.code), preserve_coverage, nargs, sv)
     ir = slot2reg(ir, ci, nargs, sv)
@@ -157,5 +165,6 @@ function run_passes(ci::CodeInfo, nargs::Int, sv::OptimizationState)
     if JLOptions().debug_level == 2
         @timeit "verify 3" (verify_ir(ir); verify_linetable(ir.linetable))
     end
+    # println("    end")
     return ir
 end

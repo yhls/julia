@@ -24,6 +24,17 @@ mutable struct OptimizationState
             frame.stmt_edges[1] = s_edges
         end
         src = frame.src
+
+
+        if length(src.code) == 12
+            println("OptimizationState constructor *************************")
+            println(frame.matching_methods_cache)
+            println("***")
+            println(src.code)
+            println()
+        end
+
+
         return new(frame.linfo,
                    s_edges::Vector{Any},
                    src, frame.mod, frame.nargs,
