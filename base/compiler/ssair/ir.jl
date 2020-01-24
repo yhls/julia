@@ -204,8 +204,7 @@ function InstructionStream(len::Int)
     types = Array{Any}(undef, len)
     lines = fill(Int32(0), len)
     flags = fill(0x00, len)
-    # mmc = Vector(nothing, len)
-    mmc = fill!(Vector{Any}(undef, len), nothing)
+    mmc = Vector{Any}(undef, len)
     return InstructionStream(insts, types, lines, flags, mmc)
 end
 InstructionStream() = InstructionStream(0)
@@ -271,7 +270,11 @@ end
 @inline getindex(is::InstructionStream, idx::Int) = Instruction(is, idx)
 function setindex!(is::InstructionStream, newval::Instruction, idx::Int)
     is.inst[idx] = newval[:inst]
-    is.mmc[idx] = newval[:mmc]
+    if isdefined(newval.data[newval.idx], :mmc)
+        is.mmc[idx] = newval[:mmc]
+    else
+        is.mmc[idx] = nothing
+    end
     is.type[idx] = newval[:type]
     is.line[idx] = newval[:line]
     is.flag[idx] = newval[:flag]

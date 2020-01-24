@@ -58,8 +58,7 @@ mutable struct OptimizationState
                    s_edges::Vector{Any},
                    src, inmodule, nargs,
                    UInt(1), get_world_counter(),
-                   # params, sptypes_from_meth_instance(linfo), slottypes, false, Vector(nothing, length(src.code)))
-                   params, sptypes_from_meth_instance(linfo), slottypes, false, fill!(Vector{Any}(undef, length(src.code)), nothing))
+                   params, sptypes_from_meth_instance(linfo), slottypes, false, Vector{Any}(undef, length(src.code)))
         end
 end
 

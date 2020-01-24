@@ -51,7 +51,8 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
             #     append!(sv.matching_methods_cache[sv.currpc], xapplicable)
             # end
         end
-        if sv.matching_methods_cache[sv.currpc] === nothing
+        a = isassigned(sv.matching_methods_cache, sv.currpc)
+        if !a || sv.matching_methods_cache[sv.currpc] === nothing
             sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     else
@@ -66,7 +67,8 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         # else
         #     append!(sv.matching_methods_cache[sv.currpc], applicable)
         # end
-        if sv.matching_methods_cache[sv.currpc] === nothing
+        a = isassigned(sv.matching_methods_cache, sv.currpc)
+        if !a || sv.matching_methods_cache[sv.currpc] === nothing
             sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     end
