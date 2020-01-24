@@ -270,7 +270,7 @@ end
 @inline getindex(is::InstructionStream, idx::Int) = Instruction(is, idx)
 function setindex!(is::InstructionStream, newval::Instruction, idx::Int)
     is.inst[idx] = newval[:inst]
-    if isdefined(newval.data[newval.idx], :mmc)
+    if isassigned(newval.data.mmc, newval.idx)
         is.mmc[idx] = newval[:mmc]
     else
         is.mmc[idx] = nothing

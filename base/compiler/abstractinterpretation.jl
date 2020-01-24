@@ -53,6 +53,7 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         end
         a = isassigned(sv.matching_methods_cache, sv.currpc)
         if !a || sv.matching_methods_cache[sv.currpc] === nothing
+            # println("STORE")
             sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     else
@@ -69,6 +70,7 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         # end
         a = isassigned(sv.matching_methods_cache, sv.currpc)
         if !a || sv.matching_methods_cache[sv.currpc] === nothing
+            # println("STORE")
             sv.matching_methods_cache[sv.currpc] = (atype, applicable, min_valid[1], max_valid[1])
         end
     end

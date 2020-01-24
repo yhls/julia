@@ -1010,8 +1010,8 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         # max_valid = UInt[typemax(UInt)]
         # println("************ ", ir.stmts.mmc)
         node = ir.stmts[idx]
-        if isdefined(node.data[node.idx], :mmc)
-            mms = node.data[node.idx].mmc
+        if isassigned(node.data.mmc, node.idx)
+            mms = node.data.mmc[node.idx]
         else
             mms = nothing
         end
