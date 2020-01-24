@@ -115,12 +115,12 @@ function InferenceState(result::InferenceResult, cached::Bool, params::Params)
     src = retrieve_code_info(result.linfo)
     src === nothing && return nothing
 
-    if length(src.code) == 13
-        println("InferenceState constructor *****************************************")
-        println(result.linfo)
-        println(src.code)
-        println()
-    end
+    # if length(src.code) == 13
+    #     println("InferenceState constructor *****************************************")
+    #     println(result.linfo)
+    #     println(src.code)
+    #     println()
+    # end
 
 
 

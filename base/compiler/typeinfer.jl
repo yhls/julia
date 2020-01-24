@@ -155,9 +155,9 @@ function finish(me::InferenceState)
         if run_optimizer
             # construct the optimizer for later use, if we're building this IR to cache it
             # (otherwise, we'll run the optimization passes later, outside of inference)
-            println("finish(InferenceState) OS start")
+            # println("finish(InferenceState) OS start")
             opt = OptimizationState(me)
-            println("finish(InferenceState) OS end")
+            # println("finish(InferenceState) OS end")
             me.result.src = opt
         end
     end

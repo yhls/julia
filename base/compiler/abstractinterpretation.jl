@@ -1160,7 +1160,7 @@ function typeinf_local(frame::InferenceState)
                 # constant conditions
                 if condval === true
                 elseif condval === false
-                    pc´ = l # - 1 # !!!
+                    pc´ = l
                 else
                     # general case
                     frame.handler_at[l] = frame.cur_hand

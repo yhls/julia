@@ -26,13 +26,13 @@ mutable struct OptimizationState
         src = frame.src
 
 
-        if length(src.code) == 12
-            println("OptimizationState constructor *************************")
-            println(frame.matching_methods_cache)
-            println("***")
-            println(src.code)
-            println()
-        end
+        # if length(src.code) == 12
+        #     println("OptimizationState constructor *************************")
+        #     println(frame.matching_methods_cache)
+        #     println("***")
+        #     println(src.code)
+        #     println()
+        # end
 
 
         return new(frame.linfo,
