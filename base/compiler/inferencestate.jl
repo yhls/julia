@@ -41,7 +41,8 @@ mutable struct InferenceState
     inferred::Bool
     dont_work_on_me::Bool
 
-    matching_methods_cache::Any
+    matching_methods_cache::Vector{Any}
+    matching_methods_cache_dict::IdDict{DataType, Tuple{Any, UInt, UInt}}
 
     # src is assumed to be a newly-allocated CodeInfo, that can be modified in-place to contain intermediate results
     function InferenceState(result::InferenceResult, src::CodeInfo,
@@ -103,7 +104,7 @@ mutable struct InferenceState
             Vector{Tuple{InferenceState,LineNum}}(), # cycle_backedges
             Vector{InferenceState}(), # callers_in_cycle
             #=parent=#nothing,
-            cached, false, false, false, Vector{Any}(undef, n))
+            cached, false, false, false, Vector{Any}(undef, n), IdDict{DataType, Tuple{Any, UInt, UInt}}())
         result.result = frame
         cached && push!(params.cache, result)
         return frame
