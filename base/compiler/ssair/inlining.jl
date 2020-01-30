@@ -1020,37 +1020,37 @@ function assemble_inline_todo!(ir::IRCode, sv::OptimizationState)
         # else
         #     println("B ", sig.atype, " *** ", mms[1])
         # end
-        if mms !== nothing && mms[1] === sig.atype
+        if mms !== nothing # && mms[1] === sig.atype
             # println("HIT")
             meth = mms[2]
             min_valid = mms[3]
             max_valid = mms[4]
         else
-            if mms !== nothing
-                # println("MISS 2 ****************")
-                # println("BAD MISS ", sv.linfo, " *** ", sig.atype, " ***** ", mms)
-                # println()
+            # if mms !== nothing
+            #     # println("MISS 2 ****************")
+            #     # println("BAD MISS ", sv.linfo, " *** ", sig.atype, " ***** ", mms)
+            #     # println()
 
-                println("BAD MISS ", sv.linfo)
-                println("    ", sig.atype)
-                println("    ", mms[1])
-                println()
+            #     println("BAD MISS ", sv.linfo)
+            #     println("    ", sig.atype)
+            #     println("    ", mms[1])
+            #     println()
 
-                # println(ir.stmts[idx])
-                # println()
+            #     # println(ir.stmts[idx])
+            #     # println()
 
-                # println(sv.src.code)
-                # println()
+            #     # println(sv.src.code)
+            #     # println()
 
-                # println(stmt)
-                # println(sig.atype)
-                # println()
+            #     # println(stmt)
+            #     # println(sig.atype)
+            #     # println()
 
 
-                # @assert false
-            else
-                # println("MISS 1")
-            end
+            #     # @assert false
+            # else
+            #     # println("MISS 1")
+            # end
             min_valid = UInt[typemin(UInt)]
             max_valid = UInt[typemax(UInt)]
             meth = _methods_by_ftype(sig.atype, sv.params.MAX_METHODS, sv.params.world, min_valid, max_valid)
