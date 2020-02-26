@@ -549,6 +549,7 @@ typedef struct _jl_methtable_t {
     jl_typemap_t *defs;
     jl_typemap_t *cache;
     jl_value_t *widest;
+    jl_array_t *toinfer;
     intptr_t max_args;  // max # of non-vararg arguments in a signature
     jl_value_t *kwsorter;  // keyword argument sorter function
     jl_module_t *module; // used for incremental serialization to locate original binding
