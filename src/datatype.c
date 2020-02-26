@@ -50,6 +50,7 @@ JL_DLLEXPORT jl_methtable_t *jl_new_method_table(jl_sym_t *name, jl_module_t *mo
     mt->module = module;
     mt->defs = jl_nothing;
     mt->cache = jl_nothing;
+    mt->widest = jl_bottom_type;
     mt->max_args = 0;
     mt->kwsorter = NULL;
     mt->backedges = NULL;
