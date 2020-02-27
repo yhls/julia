@@ -1614,6 +1614,17 @@ JL_DLLEXPORT void jl_method_table_insert(jl_methtable_t *mt, jl_method_t *method
     int invalidated = 0;
     JL_GC_PUSH1(&oldvalue);
     JL_LOCK(&mt->writelock);
+
+    // add method to toinfer pile, but only if widest possible return type
+    // isn't already Any, the widest possible type
+    if (mt->widest != (jl_value_t*)jl_any_type) {
+        if (!mt->toinfer) {
+            mt->toinfer = jl_alloc_vec_any(0);
+            jl_gc_wb(mt, mt->toinfer);
+        }
+        jl_array_ptr_1d_push(mt->toinfer, (jl_value_t*)method);
+    }
+
     // first delete the existing entry (we'll disable it later)
     struct jl_typemap_assoc search = {(jl_value_t*)type, method->primary_world, 0, NULL, 0, ~(size_t)0};
     jl_typemap_entry_t *oldentry = jl_typemap_assoc_by_type(mt->defs, &search, /*offs*/0, /*subtype*/0);
