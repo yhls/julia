@@ -35,6 +35,36 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
             return Any
         end
     end
+
+    # TODO: try making max methods infinity
+    mtable = ftname.mt
+    # if isdefined(mtable, :toinfer) && isempty(mtable.toinfer) && isconcretetype(mtable.widest)
+    #     println("widest already concrete ", atype, " ", mtable.widest)
+    #     return mtable.widest
+    # end
+
+    function process(signature)
+        if isdefined(mtable, :toinfer)
+            while mtable.widest !== Any && !isempty(mtable.toinfer)
+                m = pop!(mtable.toinfer)
+                # can sig be more specific than in the definition?
+                _sig = m.sig
+                _sp = []
+                while _sig isa UnionAll
+                    push!(_sp, _sig.var)
+                    _sig = _sig.body
+                end
+                sparams = svec(_sp...)
+                this_rt, edgecycle1, edge = abstract_call_method(m, m.sig, sparams, true, sv)
+                mtable.widest = tmerge(mtable.widest, this_rt)
+            end
+            empty!(mtable.toinfer)
+        end
+        # println("process ", signature, " ", mtable.widest)
+        return mtable.widest
+    end
+
+
     min_valid = UInt[typemin(UInt)]
     max_valid = UInt[typemax(UInt)]
     splitunions = 1 < countunionsplit(atype_params) <= sv.params.MAX_UNION_SPLITTING
@@ -43,7 +73,8 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         applicable = Any[]
         for sig_n in splitsigs
             xapplicable = _methods_by_ftype(sig_n, max_methods, sv.params.world, min_valid, max_valid)
-            xapplicable === false && return Any
+            # xapplicable === false && return Any # HERE !!!
+            xapplicable === false && return process(sig_n)
             append!(applicable, xapplicable)
         end
     else
@@ -51,7 +82,8 @@ function abstract_call_gf_by_type(@nospecialize(f), argtypes::Vector{Any}, @nosp
         if applicable === false
             # this means too many methods matched
             # (assume this will always be true, so we don't compute / update valid age in this case)
-            return Any
+            # return Any # HERE !!!
+            return process(atype)
         end
     end
     update_valid_age!(min_valid[1], max_valid[1], sv)
@@ -260,6 +292,16 @@ function abstract_call_method(method::Method, @nospecialize(sig), sparams::Simpl
     if method.name === :depwarn && isdefined(Main, :Base) && method.module === Main.Base
         return Any, false, nothing
     end
+
+    # # TODO: TURN THIS ON
+    # mtable = get_methodtable(method)
+    # if isdefined(mtable, :toinfer) && isempty(mtable.toinfer) && isconcretetype(mtable.widest)
+    #     return mtable.widest, false, nothing # TODO: understand what the other results are
+    # end
+
+
+
+
     topmost = nothing
     # Limit argument type tuple growth of functions:
     # look through the parents list to see if there's a call to the same method
