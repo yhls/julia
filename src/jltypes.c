@@ -1847,6 +1847,8 @@ void jl_init_types(void) JL_GC_DISABLED
     jl_typeofbottom_type->instance = jl_bottom_type;
     jl_type_type_mt->widest = jl_bottom_type;
     jl_nonfunction_mt->widest = jl_bottom_type;
+    /* jl_type_type_mt->widest = jl_any_type; */
+    /* jl_nonfunction_mt->widest = jl_any_type; */
 
     jl_uniontype_type = jl_new_datatype(jl_symbol("Union"), core, type_type, jl_emptysvec,
                                         jl_perm_symsvec(2, "a", "b"),

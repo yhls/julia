@@ -257,6 +257,7 @@ function isdefined_tfunc(@nospecialize(args...))
     if isType(a1)
         return Bool
     end
+    old_a1 = a1
     a1 = unwrap_unionall(a1)
     if isa(a1, DataType) && !a1.abstract
         if a1 === Module
@@ -284,7 +285,7 @@ function isdefined_tfunc(@nospecialize(args...))
                 end
             elseif idx <= 0 || (!isvatuple(a1) && idx > fieldcount(a1))
                 return Const(false)
-            elseif !isvatuple(a1) && isbitstype(fieldtype(a1, idx))
+            elseif !isvatuple(a1) && isbitstype(fieldtype(old_a1, idx))
                 return Const(true)
             elseif isa(arg1, Const)
                 arg1v = (arg1::Const).val

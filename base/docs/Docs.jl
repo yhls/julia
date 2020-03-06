@@ -585,7 +585,8 @@ function docm(source::LineNumberNode, mod::Module, meta, ex, define::Bool = true
     # All other expressions are undocumentable and should be handled on a case-by-case basis
     # with `@__doc__`. Unbound string literals are also undocumentable since they cannot be
     # retrieved from the module's metadata `IdDict` without a reference to the string.
-    docerror(ex)
+    # docerror(ex)
+    docerror(x)
 
     return doc
 end
