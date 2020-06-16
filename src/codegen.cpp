@@ -5441,10 +5441,9 @@ static std::pair<std::unique_ptr<Module>, jl_llvm_functions_t>
             i == 0) { // or it is the first argument (which isn't in `argArray`)
             AllocaInst *av = new AllocaInst(T_prjlvalue, 0,
                 jl_symbol_name(s), /*InsertBefore*/ctx.ptlsStates);
-            StoreInst *SI = new StoreInst(
+            new StoreInst(
                 ConstantPointerNull::get(cast<PointerType>(T_prjlvalue)), av,
-                false);
-            SI->insertAfter(ctx.ptlsStates);
+                /*isVolatile*/false, ctx.ptlsStates->getNextNode());
             varinfo.boxroot = av;
             if (ctx.debug_enabled && varinfo.dinfo) {
                 DIExpression *expr;

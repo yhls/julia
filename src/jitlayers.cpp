@@ -444,7 +444,9 @@ void JuliaOJIT::DebugObjectRegistrar::registerObject(RTDyldObjHandleT H, const O
     // in the primary hash table for the enclosing JIT
     for (auto &Symbol : Object->symbols()) {
 #if JL_LLVM_VERSION >= 110000
-        uint32_t Flags = Symbol.getFlags().get();
+        auto FlagsOrError = Symbol.getFlags();
+        assert(FlagsOrError);
+        uint32_t Flags = FlagsOrError.get();
 #else
         uint32_t Flags = Symbol.getFlags();
 #endif

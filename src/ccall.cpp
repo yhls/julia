@@ -986,13 +986,16 @@ static jl_cgval_t emit_llvmcall(jl_codectx_t &ctx, jl_value_t **args, size_t nar
         << jl_string_data(ir) << "\n}";
         SMDiagnostic Err = SMDiagnostic();
         std::string ir_string = ir_stream.str();
-        // Do not enable update debug info since it runs the verifier on the whole module
-        // and will error on the function we are currently emitting.
+        // Parse LLVM IR into new module because `parseAssemblyInto` will run
+        // the verifier on the whole module, and would error on the function
+        // we are currently emitting.
+        std::unique_ptr<Module> M(new Module(ir_name, jl_LLVMContext));
         ModuleSummaryIndex index = ModuleSummaryIndex(true);
         bool failed = parseAssemblyInto(MemoryBufferRef(ir_string, "llvmcall"),
-                                        jl_Module, &index, Err, nullptr,
-                                        /* UpdateDebugInfo */ false);
-        f = jl_Module->getFunction(ir_name);
+                                        M.get(), &index, Err);
+        FunctionMover mover(jl_Module, M.get());
+        f = M->getFunction(ir_name);
+        f = mover.CloneFunction(f);
         if (failed) {
             // try to get the module in a workable state again
             if (f)

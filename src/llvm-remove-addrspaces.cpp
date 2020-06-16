@@ -78,7 +78,11 @@ public:
             DstTy = VectorType::get(
                     remapType(Ty->getElementType()),
                     Ty->getNumElements(),
+#if JL_LLVM_VERSION >= 110000
+                    isa<ScalableVectorType>(Ty));
+#else
                     Ty->isScalable());
+#endif
 
         if (DstTy != SrcTy)
             LLVM_DEBUG(

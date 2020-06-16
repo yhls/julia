@@ -73,8 +73,8 @@ Value *FinalLowerGC::lowerNewGCFrame(CallInst *target, Function &F)
     AllocaInst *gcframe = new AllocaInst(
         T_prjlvalue,
         0,
-        ConstantInt::get(T_int32, nRoots + 2));
-    gcframe->setAlignment(Align(16));
+        ConstantInt::get(T_int32, nRoots + 2),
+        Align(16));
     gcframe->insertAfter(target);
     gcframe->takeName(target);
 
